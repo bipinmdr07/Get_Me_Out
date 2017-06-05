@@ -8,13 +8,16 @@ var current;	// variable used to identify the current cell
 
 var stack = [];	// stack used for storing all current cell elements for backtraking
 
-var floor_material = new THREE.MeshBasicMaterial({color: 0x00fe00 });
+var floor_texture = new THREE.TextureLoader().load("assets/floor-texture.jpg");
+floor_texture.wrapS = floor_texture.wrapT = THREE.RepeatWrapping;
+floor_texture.repeat.set(w, w);
+var floor_material = new THREE.MeshBasicMaterial({ map: floor_texture });
 
 // base function responsible for the creation of maze
 function setup(){
-	var floor = new THREE.BoxGeometry(length, breadth, 1);
+	var floor = new THREE.PlaneGeometry(length, breadth, 1);
 	var floor_mesh = new THREE.Mesh(floor, floor_material);
-	floor_mesh.position.set(0,0,0);
+	floor_mesh.position.set(0,0,0.05);
 	scene.add(floor_mesh);	// adding floor_mesh in scene
 
 	// calculating the number of cols and rows according to size of cell and whole maze
@@ -132,7 +135,8 @@ function Cell(i, j){
 	// object function for displaying the walls of the maze according to array walls[] boolean values
 	this.show = function(){
 
-		var cube_material = new THREE.MeshBasicMaterial({color: 0xff0000 });
+		var wall_texture = new THREE.TextureLoader().load("assets/maze_wall.jpg");
+		var cube_material = new THREE.MeshBasicMaterial({ map: wall_texture });
 
 		if(this.walls[0]){	//front wall
 			var front_wall = new THREE.Mesh(new THREE.BoxGeometry(w, w/10, w), cube_material);	//(10, 1, 10)

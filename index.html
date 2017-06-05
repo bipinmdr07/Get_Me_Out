@@ -1,34 +1,105 @@
 <html>
 	<head>
 		<title>Get Me Out</title>
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+		<script src="javascript/three.min.js"></script>
+		<script src="javascript/THREEx.KeyboardState.js"></script>
+		<script src="javascript/OrbitControls.js"></script>
+
 		<style>
 			body { margin: 0; }
 			canvas { width: 100%; height: 100% }
 		</style>
 	</head>
 	<body>
-		<script src="javascript/three.js"></script>
+
 		<script src="javascript/maze.js"></script>
 
 		<script>
+			var rotationz = 0;
 			var scene = new THREE.Scene();
 			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
 
+			var keyboard = new THREEx.KeyboardState();
+
 			var renderer = new THREE.WebGLRenderer();
+			renderer.setClearColor(0xffffff);
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild( renderer.domElement );
+
+			// player object
+			var cube = new THREE.BoxGeometry(1,1,1);
+			var cube_material = new THREE.MeshBasicMaterial({color: 0x00a000});
+			var cube_mesh = new THREE.Mesh(cube, cube_material);
+			cube_mesh.position.set(-45, -51, 0.6);
+			// cube_mesh.add(camera);
+
+			scene.add(cube_mesh);
+
+			// var controls = new THREE.OrbitControls(camera);
+			// controls.addEventListener('change', render);
+
+			// var axis = new THREE.AxisHelper(200);
+			// scene.add(axis);
+
+			var directionallight = new THREE.DirectionalLight(0xffffff, 1);
+			directionallight.position.set(0, 0, 100);
+			directionallight.target.position = scene.position;
+			scene.add(directionallight);
+
+			var PlaneGeometry = new THREE.PlaneGeometry(200, 150, 1);
+			var material = new THREE.MeshLambertMaterial( { map: new THREE.TextureLoader().load("assets/ground.jpg") });
+			var plane = new THREE.Mesh(PlaneGeometry, material);
+			scene.add(plane);
 
 			setup();
 			draw_maze();
 
-			camera.position.z = 200;
+			// cube_mesh.add(camera);
+			camera.position.set(scene.position.x, scene.position.y - 3, scene.position.z + 1 );
 
+			scene.add(camera);
+			cube_mesh.add(camera);
+
+			var camera_helper = new THREE.CameraHelper(camera);
+			scene.add(camera_helper);
+
+			var dist = cube_mesh.position.distanceTo(camera.position);
+			console.log(camera.getWorldDirection());
+			// THREE.SceneUtils.attach(camera, scene, cube_mesh);
+			// camera.lookAt(cube_mesh.position);
 
 			// required for rendering the objects
 			var render = function () {
 				requestAnimationFrame( render );
 				renderer.render(scene, camera);
+
+				camera.updateProjectionMatrix();
+
+				camera.updateMatrixWorld();
+				// console.log(camera.parent);
+				// camera.position.set(cube_mesh.position.x , cube_mesh.position.y - 20, cube_mesh.position.z + 20);
+				// keyboard controls
+				if (keyboard.pressed("W") || keyboard.pressed("up")){
+					cube_mesh.translateY( 0.1 );
+				}
+				if (keyboard.pressed("A") || keyboard.pressed("left")){
+					cube_mesh.rotation.z += 1 * Math.PI / 180;
+				}
+				if (keyboard.pressed("S") || keyboard.pressed("down")){
+					cube_mesh.translateY( -0.1 );
+				}
+				if (keyboard.pressed("D") || keyboard.pressed("right")){
+					cube_mesh.rotation.z -= 1 * Math.PI/180;
+				}
 			};
+
+			// var relativeCameraOffset = new THREE.Vector3(0, 0, 0);
+			// var cameraOffset = cube_mesh.matrixWorld.multiplyVector3( relativeCameraOffset );
+			// camera.position.set(cameraOffset.position);
+			camera.lookAt(scene.position);
+
 
 			render();
 		</script>
