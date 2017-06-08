@@ -3,6 +3,7 @@ var w = 10;
 var length = 100;
 var breadth = 100;
 var grid = [];
+var collidable_walls = [];
 
 var current;	// variable used to identify the current cell
 
@@ -12,6 +13,7 @@ var floor_texture = new THREE.TextureLoader().load("assets/floor-texture.jpg");
 floor_texture.wrapS = floor_texture.wrapT = THREE.RepeatWrapping;
 floor_texture.repeat.set(w, w);
 var floor_material = new THREE.MeshBasicMaterial({ map: floor_texture });
+var help_material = new THREE.MeshBasicMaterial({color: 0x000000});
 
 // base function responsible for the creation of maze
 function setup(){
@@ -141,22 +143,42 @@ function Cell(i, j){
 		if(this.walls[0]){	//front wall
 			var front_wall = new THREE.Mesh(new THREE.BoxGeometry(w, w/10, w), cube_material);	//(10, 1, 10)
 			front_wall.position.set(-length/2 + w/2 + this.i * w, -length/2 + w - 1/(20 * w) + this.j * w, 5);
+			collidable_walls.push(front_wall);
 			scene.add(front_wall);
+
+			var clone = front_wall.clone();
+			clone.material = help_material;
+			scene2.add(clone);
 		}
 		if(this.walls[1]){	// right wall
 			var right_wall = new THREE.Mesh(new THREE.BoxGeometry(w/10, w, w), cube_material);	//(1, 10, 10)
 			right_wall.position.set(-length/2 + w - 1/(20 * w) + this.i * w, -length/2 + w/2 + this.j * w, 5);
+			collidable_walls.push(right_wall);
 			scene.add(right_wall);
+
+			var clone = right_wall.clone();
+			clone.material = help_material;
+			scene2.add(clone);
 		}
 		if(this.walls[2]){	// back wall
 			var back_wall = new THREE.Mesh(new THREE.BoxGeometry(w, w/10, w), cube_material);	//(10, 1, 10)
 			back_wall.position.set(-length/2 + w/2 + this.i * w, -length/2 + 1/(20 * w) + this.j * w, 5);
+			collidable_walls.push(back_wall);
 			scene.add(back_wall);
+
+			var clone = back_wall.clone();
+			clone.material = help_material;
+			scene2.add(clone);
 		}
 		if(this.walls[3]){	// left wall
 			var left_wall = new THREE.Mesh(new THREE.BoxGeometry(w/10, w, w), cube_material); //(1, 10, 10)
 			left_wall.position.set(-length/2 + w/(20 * w) + this.i * w, -length/2 + w/2 + this.j * w, 5);
+			collidable_walls.push(left_wall);
 			scene.add(left_wall);
+
+			var clone = left_wall.clone();
+			clone.material = help_material;
+			scene2.add(clone);
 		}
 	}
 }
@@ -187,4 +209,8 @@ function removeWalls(a, b){
 		a.walls[0] = false;
 		b.walls[2] = false;
 	}
+}
+
+function get_collidable_walls(){
+	return collidable_walls;
 }

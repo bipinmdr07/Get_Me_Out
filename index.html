@@ -5,7 +5,8 @@
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 		<script src="javascript/three.min.js"></script>
 		<script src="javascript/THREEx.KeyboardState.js"></script>
-		<script src="javascript/OrbitControls.js"></script>
+		<!-- <script src="javascript/physi.js"></script> -->
+		<!-- <script src="javascript/OrbitControls.js"></script> -->
 
 		<style>
 			body { margin: 0; }
@@ -13,19 +14,24 @@
 		</style>
 	</head>
 	<body>
+		<input type = "hidden	", name = "collidable_obj">
 
 		<script src="javascript/maze.js"></script>
 
 		<script>
-			var rotationz = 0;
+			var collidable_wall_mesh;
 			var scene = new THREE.Scene();
+			var scene2 = new THREE.Scene();
 			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+			var camera2 = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000 );
 
 			var keyboard = new THREEx.KeyboardState();
+			var ray; 	// ray for detecting the obasacle and handeling collision
 
 			var renderer = new THREE.WebGLRenderer();
 			renderer.setClearColor(0xffffff);
 			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.autoClear = false;
 			document.body.appendChild( renderer.domElement );
 
 			// player object
@@ -33,15 +39,14 @@
 			var cube_material = new THREE.MeshBasicMaterial({color: 0x00a000});
 			var cube_mesh = new THREE.Mesh(cube, cube_material);
 			cube_mesh.position.set(-45, -51, 0.6);
-			// cube_mesh.add(camera);
+
+			var help_cube = new THREE.CylinderGeometry(0, 3, 10, 4, 1, true);
+			var help_cube_mesh = new THREE.Mesh(help_cube, new THREE.MeshBasicMaterial({color: 0xee0000}));
+			help_cube_mesh.position.set(cube_mesh.position.x, cube_mesh.position.y, cube_mesh.position.z);
+			console.log(cube_mesh.position.x + ', ' + help_cube_mesh.position);
+			scene2.add(help_cube_mesh);
 
 			scene.add(cube_mesh);
-
-			// var controls = new THREE.OrbitControls(camera);
-			// controls.addEventListener('change', render);
-
-			// var axis = new THREE.AxisHelper(200);
-			// scene.add(axis);
 
 			var directionallight = new THREE.DirectionalLight(0xffffff, 1);
 			directionallight.position.set(0, 0, 100);
@@ -56,48 +61,59 @@
 			setup();
 			draw_maze();
 
-			// cube_mesh.add(camera);
 			camera.position.set(scene.position.x, scene.position.y - 3, scene.position.z + 1 );
+			camera2.position.set(scene.position.x, scene.position.y, scene.position.z + 200);
 
 			scene.add(camera);
 			cube_mesh.add(camera);
 
-			var camera_helper = new THREE.CameraHelper(camera);
-			scene.add(camera_helper);
-
 			var dist = cube_mesh.position.distanceTo(camera.position);
-			console.log(camera.getWorldDirection());
-			// THREE.SceneUtils.attach(camera, scene, cube_mesh);
-			// camera.lookAt(cube_mesh.position);
+
+			var x = get_collidable_walls();
+			console.log(x);
 
 			// required for rendering the objects
 			var render = function () {
 				requestAnimationFrame( render );
+				renderer.clear();
 				renderer.render(scene, camera);
+				renderer.clearDepth();
+				renderer.render(scene2, camera2);
 
-				camera.updateProjectionMatrix();
-
-				camera.updateMatrixWorld();
-				// console.log(camera.parent);
-				// camera.position.set(cube_mesh.position.x , cube_mesh.position.y - 20, cube_mesh.position.z + 20);
 				// keyboard controls
 				if (keyboard.pressed("W") || keyboard.pressed("up")){
 					cube_mesh.translateY( 0.1 );
+					help_cube_mesh.translateY( 0.1 );
 				}
 				if (keyboard.pressed("A") || keyboard.pressed("left")){
 					cube_mesh.rotation.z += 1 * Math.PI / 180;
+					help_cube_mesh.rotation.z += 1 * Math.PI / 180;
 				}
 				if (keyboard.pressed("S") || keyboard.pressed("down")){
 					cube_mesh.translateY( -0.1 );
+					help_cube_mesh.translateY( -0.1 );
 				}
 				if (keyboard.pressed("D") || keyboard.pressed("right")){
 					cube_mesh.rotation.z -= 1 * Math.PI/180;
+					help_cube_mesh.rotation.z -= 1 * Math.PI/180;
 				}
 			};
 
-			// var relativeCameraOffset = new THREE.Vector3(0, 0, 0);
-			// var cameraOffset = cube_mesh.matrixWorld.multiplyVector3( relativeCameraOffset );
-			// camera.position.set(cameraOffset.position);
+			for (var vertexIndex = 0; vertexIndex < cube_mesh.geometry.vertices.length; vertexIndex++)
+			{
+		    var localVertex = cube_mesh.geometry.vertices[vertexIndex].clone();
+		    var globalVertex = cube_mesh.matrix.multiplyVector3(localVertex);
+		    var directionVector = globalVertex.sub( cube_mesh.position );
+
+		    var ray = new THREE.Raycaster( cube_mesh.position, directionVector.clone().normalize() );
+		    var collisionResults = ray.intersectObjects( collidable_wall_mesh );
+				console.log("collision detection in process");
+		    if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() )
+		    {
+					console.log("collision occurred");
+		        // a collision occurred... do something...
+		    }
+			}
 			camera.lookAt(scene.position);
 
 
