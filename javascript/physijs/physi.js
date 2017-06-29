@@ -1401,4 +1401,3 @@ window.Physijs = (function() {
 
 	return Physijs;
 })();
-Contact GitHub 
