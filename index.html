@@ -29,7 +29,6 @@
 			var PlaneGeometry, material, plane;
 
 			var collidable_wall_mesh;
-			var hit = false;
 
 			var raycaster;
 			var raycasters = [];
@@ -119,7 +118,7 @@
 				groupArrowHelper.position.x = cube_mesh.position.x;
 				groupArrowHelper.position.z = 0.6;
 
-				console.log(cube_mesh.position.z);
+				// console.log(cube_mesh.position.z);
 
 				cube_mesh.add(groupArrowHelper);
 
@@ -127,7 +126,7 @@
 				scene.add(groupArrowHelper);
 				// scene2.add(groupArrowHelper.clone());
 
-				console.log(arrowhelpers);
+				// console.log(arrowhelpers);
 
 				raycaster = new THREE.Raycaster();
 				// loop for detecting the collision
@@ -174,13 +173,11 @@
 				// 7 = backward left
 
 				// help_cube_mesh.position.set(cube_mesh.position);
-
+				// console.log(hit);
 				// keyboard controls
 				if (keyboard.pressed("W") || keyboard.pressed("up")){
 					cube_mesh.translateY( 0.1 );
-					if (hit === false){
-						help_cube_mesh.translateY( 0.1 );
-					}
+					help_cube_mesh.translateY( 0.1 );
 				}
 				if (keyboard.pressed("A") || keyboard.pressed("left")){
 					cube_mesh.rotation.z += 1 * Math.PI / 180;
@@ -188,9 +185,7 @@
 				}
 				if (keyboard.pressed("S") || keyboard.pressed("down")){
 					cube_mesh.translateY( -0.1 );
-					if (hit === false){
-						help_cube_mesh.translateY( -0.1 );
-					}
+					help_cube_mesh.translateY( -0.1 );
 				}
 				if (keyboard.pressed("D") || keyboard.pressed("right")){
 					cube_mesh.rotation.z -= 1 * Math.PI/180;
@@ -203,7 +198,7 @@
 			start();
 
 			var c = get_collidable_walls();
-			console.log(c);
+			// console.log(c);
 
 			render();
 		</script>

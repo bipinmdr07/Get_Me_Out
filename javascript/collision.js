@@ -1,6 +1,5 @@
 detectCollision = function( ){
 
-	// var hit = false;
 	var dist = 0.9;
 
 	// var origin = new THREE.Vector3(cube_mesh.position.x, cube_mesh.position.y, cube_mesh.position.z);
@@ -25,7 +24,6 @@ detectCollision = function( ){
 
 		if (intersections.length > 0){
 
-			hit = true;
 			// 0 = forward
 			// 1 = backward
 			// 2 = left
@@ -37,51 +35,60 @@ detectCollision = function( ){
 
 			switch (i) {
 				case 0:
-					console.log("forward: " + i);
+					// console.log("forward: " + i);
 					cube_mesh.translateY(-0.1);
+					help_cube_mesh.translateY(-0.1);
 					break;
 
 				case 1:
-					console.log("backward: " + i);
+					// console.log("backward: " + i);
 					cube_mesh.translateY(0.1);
+					help_cube_mesh.translateY(0.1);
 					break;
 				case 2:
-					console.log("left: " + i);
+					// console.log("left: " + i);
 					cube_mesh.translateX(0.1);
+					help_cube_mesh.translateX(0.1);
 					break;
 				case 3:
-					console.log("right: " + i);
+					// console.log("right: " + i);
 					cube_mesh.translateX(-0.1);
+					help_cube_mesh.translateX(-0.1);
 				break;
 
 				case 4:
-					console.log("forward right: " + i);
+					// console.log("forward right: " + i);
 					cube_mesh.translateX(-0.1);
 					cube_mesh.translateY(-0.1);
+					help_cube_mesh.translateX(-0.1);
+					help_cube_mesh.translateY(-0.1);
 					break;
 
 				case 5:
-					console.log("forward left: " + i);
+					// console.log("forward left: " + i);
 					cube_mesh.translateX(0.1);
 					cube_mesh.translateY(-0.1);
+					help_cube_mesh.translateX(0.1);
+					help_cube_mesh.translateY(-0.1);
 					break;
 
 				case 6:
-					console.log("backward right:" + i);
+					// console.log("backward right:" + i);
 					cube_mesh.translateX(-0.1);
 					cube_mesh.translateY(0.1);
+					help_cube_mesh.translateX(-0.1);
+					help_cube_mesh.translateY(0.1);
 					break;
 				case 7:
-					console.log("backward left: " + i);
+					// console.log("backward left: " + i);
 					cube_mesh.translateX(0.1);
 					cube_mesh.translateY(0.1);
+					help_cube_mesh.translateX(0.1);
+					help_cube_mesh.translateY(0.1);
 					break;
 
 			}
 
-		}
-		else {
-			hit = false;
 		}
 
 	}
