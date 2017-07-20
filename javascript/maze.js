@@ -17,6 +17,7 @@ var help_material = new THREE.MeshBasicMaterial({color: 0x000000});
 
 // base function responsible for the creation of maze
 function setup(){
+	// floor inside the maze
 	var floor = new THREE.PlaneGeometry(length, breadth, 1);
 	var floor_mesh = new THREE.Mesh(floor, floor_material);
 	floor_mesh.position.set(0,0,0.05);

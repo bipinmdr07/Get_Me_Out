@@ -21,7 +21,7 @@
 			var scene, scene2;
 			var camera, camera2;
 			var renderer;
-			var directionallight;
+			var directionallight, spotlight;
 			var keyboard;
 
 			var cube, cube_material, cube_mesh;
@@ -33,6 +33,11 @@
 			var raycaster;
 			var raycasters = [];
 			var position;
+
+			var moveForward, moveBackward, moveRight, moveLeft;
+
+			var clock = new THREE.Clock();
+			var loader, vlad, handler, walk, mixer;
 
 			var rays = [
 
@@ -47,19 +52,22 @@
 
 			];
 
-			var arrowhelpers = [];
-			var groupArrowHelper = new THREE.Object3D();
-
 			start = function(){
 
+				// this scene is for main playing screen
 				scene = new THREE.Scene();
+				// this scene is for the mini-map or top view of the maze
 				scene2 = new THREE.Scene();
 
+				// camera element for scene
 				camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+				// camera element for scene2
 				camera2 = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000 );
 
+				// initializing keyboard libraty THREEx.KeyboardState.js for listening to key pressed event
 				keyboard = new THREEx.KeyboardState();
 
+				// initializing the WebGLRenderer
 				renderer = new THREE.WebGLRenderer();
 				renderer.setClearColor(0xffffff);
 				renderer.setSize( window.innerWidth, window.innerHeight );
@@ -71,27 +79,43 @@
 				cube_material = new THREE.MeshBasicMaterial({color: 0x00a000});
 				cube_mesh = new THREE.Mesh(cube, cube_material);
 				cube_mesh.position.set(-45, -51, 0.6);
+
+				// making the cube invisible
+				cube_mesh.material.visible = false;
 				scene.add(cube_mesh);
 
+				// the indicator of the position in mini-map actually a cone.
 				help_cube = new THREE.CylinderGeometry(0, 3, 10, 4, 1, true);
 				help_cube_mesh = new THREE.Mesh(help_cube, new THREE.MeshBasicMaterial({color: 0xee0000}));
 				help_cube_mesh.position.set(cube_mesh.position.x, cube_mesh.position.y, cube_mesh.position.z);
 				scene2.add(help_cube_mesh);
 
-				directionallight = new THREE.DirectionalLight(0xffffff, 1);
+				// directional light for sun-light source.
+				directionallight = new THREE.DirectionalLight(0xffffff, 0.75);
 				directionallight.position.set(0, 0, 100);
 				directionallight.target.position = scene.position;
 				scene.add(directionallight);
 
+				// spotlight for making the back of character visible
+				spotlight = new THREE.SpotLight(0xffffff, 0.5);
+				spotlight.position.set(-45, -55, 3.5);
+				spotlight.target.position = scene.position;
+				scene.add(spotlight);
+				// making spotlight child of cube_mesh
+				cube_mesh.add(spotlight);
+
+				// A ground
 				PlaneGeometry = new THREE.PlaneGeometry(200, 150, 1);
 				material = new THREE.MeshLambertMaterial( { map: new THREE.TextureLoader().load("assets/ground.jpg") });
 				plane = new THREE.Mesh(PlaneGeometry, material);
 				scene.add(plane);
 
-				camera.position.set(scene.position.x, scene.position.y - 3, scene.position.z + 1 );
-				camera2.position.set(scene.position.x, scene.position.y, scene.position.z + 200);
+				// setting the camera position relative to the scene position
+				camera.position.set(scene.position.x, scene.position.y - 3, scene.position.z + 1.5 );
+				camera2.position.set(scene.position.x, scene.position.y - 30, scene.position.z + 200);
 				camera.lookAt(scene.position);
 
+				// adding camera to the scene and making it a child of cube_mesh to make it follow cube_mesh
 				scene.add(camera);
 				cube_mesh.add(camera);
 
@@ -99,45 +123,36 @@
 				setup();
 				draw_maze();
 
-
+				// getting the position of the cube for origin of raycasting for collision detection
 				position = new THREE.Vector3(cube_mesh.position.x, cube_mesh.position.y, cube_mesh.position.z);
-				// arrowhelper = new THREE.ArrowHelper(rays[2], position, 2);
-				// scene.add(arrowhelper);
 
-				// groupArrowHelper.position.set(position);
-
-				for ( var i = 0; i < rays.length; i++){
-					arrowhelper = new THREE.ArrowHelper(rays[i].normalize(), groupArrowHelper.position);
-					arrowhelpers.push(arrowhelper);
-					// scene.add(arrowhelper);
-					groupArrowHelper.add(arrowhelper);
-				}
-
-				// groupArrowHelper.position = cube_mesh.position;
-				groupArrowHelper.position.y = cube_mesh.position.y;
-				groupArrowHelper.position.x = cube_mesh.position.x;
-				groupArrowHelper.position.z = 0.6;
-
-				// console.log(cube_mesh.position.z);
-
-				cube_mesh.add(groupArrowHelper);
-
-				// groupArrowHelper.add(arrowhelpers);
-				scene.add(groupArrowHelper);
-				// scene2.add(groupArrowHelper.clone());
-
-				// console.log(arrowhelpers);
-
+				// instance of raycaster
 				raycaster = new THREE.Raycaster();
-				// loop for detecting the collision
-				// for ( var i = 0; i < rays.length; i++ ){
-				//
-				// 	var direction = position.sub(rays[i]);
-				// 	raycaster.set(position, rays[i], 1.5, 1.9);
-				//
-				// 	raycasters.push(raycaster);
-				//
-				// }
+
+				// importing the character from json file created from blender
+				loader = new THREE.JSONLoader();
+				loader.load('assets/model/min_ploy_character.json', function (geometry, materials){
+
+					materials.forEach(function (mat){
+						mat.skinning = true;
+					})
+					var material = new THREE.MeshPhongMaterial( { map: 								THREE.ImageUtils.loadTexture('assets/min_ploy_character_texture.png') } );
+
+
+
+					vlad = new THREE.SkinnedMesh(geometry, new THREE.MeshFaceMaterial(materials));
+					vlad.position.set(-45, -51, 0);
+					vlad.rotation.set(90 * Math.PI / 180, 180 * Math.PI / 180, 0);
+
+					vlad.scale.set(0.5, 0.5, 0.5);
+
+					 mixer = new THREE.AnimationMixer( vlad );
+					 walk = mixer.clipAction( geometry.animations[0] );
+					//  walk.play();
+
+					scene.add(vlad);
+					 render();
+				});
 
 			}
 
@@ -145,23 +160,28 @@
 			var render = function () {
 
 				requestAnimationFrame( render );
+
+				// for making the animation play in fixed rate
+				mixer.update( clock.getDelta()  );
+
 				renderer.clear();
 				renderer.render(scene, camera);
 				renderer.clearDepth();
 				renderer.render(scene2, camera2);
 
+
 				update();
 
 			};
 
-			var arrow;
-
 			var update = function(){
 
-				groupArrowHelper.position.set(cube_mesh.position.x, cube_mesh.position.y, cube_mesh.position.z);
-				// groupArrowHelper.rotation.z += Math.PI / 180
-
+				// calling the function for checking the collision
 				detectCollision();
+
+				// updating the position and rotation of character with respect to cube_mesh
+				vlad.position.set(cube_mesh.position.x, cube_mesh.position.y, cube_mesh.position.z - 0.6);
+				vlad.rotation.y = cube_mesh.rotation.z;
 
 				// 0 = forward
 				// 1 = backward
@@ -172,24 +192,50 @@
 				// 6 = backward right
 				// 7 = backward left
 
-				// help_cube_mesh.position.set(cube_mesh.position);
-				// console.log(hit);
 				// keyboard controls
 				if (keyboard.pressed("W") || keyboard.pressed("up")){
 					cube_mesh.translateY( 0.1 );
 					help_cube_mesh.translateY( 0.1 );
+					walk.play();
+					moveForward = true;
 				}
+				else{
+					moveForward = false;
+				}
+
 				if (keyboard.pressed("A") || keyboard.pressed("left")){
 					cube_mesh.rotation.z += 1 * Math.PI / 180;
 					help_cube_mesh.rotation.z += 1 * Math.PI / 180;
+					moveLeft = true;
 				}
+				else{
+					moveLeft = false;
+				}
+
 				if (keyboard.pressed("S") || keyboard.pressed("down")){
 					cube_mesh.translateY( -0.1 );
 					help_cube_mesh.translateY( -0.1 );
+					moveBackward = true;
 				}
+				else {
+					moveBackward = false;
+				}
+
 				if (keyboard.pressed("D") || keyboard.pressed("right")){
 					cube_mesh.rotation.z -= 1 * Math.PI/180;
 					help_cube_mesh.rotation.z -= 1 * Math.PI/180;
+					moveRight = true;
+				}
+				else{
+					moveRight = false;
+				}
+
+				// playing the animation only if key is pressed
+				if (moveForward || moveBackward || moveRight || moveLeft){
+					walk.play();
+				}
+				else {
+					walk.stop();
 				}
 
 			}
@@ -198,9 +244,8 @@
 			start();
 
 			var c = get_collidable_walls();
-			// console.log(c);
 
-			render();
+			// render();
 		</script>
 	</body>
 </html>
