@@ -3,19 +3,175 @@
 		<title>Get Me Out</title>
 
 		<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script> -->
+		<!-- <link rel="stylesheet" href="assets/animation.css"> -->
 		<script src="javascript/three.min.js"></script>
 		<script src="javascript/THREEx.KeyboardState.js"></script>
 		<script src="javascript/collision.js"></script>
+		<script src="javascript/maze.js"></script>
 		<!-- <script src="javascript/physijs/physi.js"></script> -->
 		<!-- <script src="javascript/OrbitControls.js"></script> -->
 
 		<style>
-			body { margin: 0; }
+			body {
+				margin: 0;
+				overflow: true;
+			}
 			canvas { width: 100%; height: 100% }
+			#info, #setting {
+				position: absolute;
+				top: 0px; width: 100%;
+				color: #ffffff;
+				padding: 5px;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:left;
+				z-index:1000;
+			}
+
+			p {
+				color: black;
+			}
+
+			/*for help menu*/
+			#overlay {
+				width: 100%;
+				height: 100%;
+				position: fixed;
+				top : 0;
+				left: 0;
+				background-image: url(assets/pattern-overlay.png);
+			}
+
+			#box_frame {
+				width: 100%;
+				position: fixed;
+				top: 30%;
+			}
+
+			#box {
+				width: 400px;
+				padding: 10px;
+				margin: auto;
+				background-color: white;
+				border: 3px solid black;
+				font-size: 24sp;
+			}
+
+			#closeme {
+				/*text-align: right;*/
+				/*color: blue;*/
+				float: right;
+			}
 		</style>
+
+		<script type = "text/javascript">
+			var gamePaused = false;
+			var minimap_enabled = false;
+			function open_box(){
+				var box_content =		'<div id = "overlay">' +
+															'<div id = "box_frame">' +
+																'<div id = "box">' +
+																	'<a id = "closeme" href = "javascript:void(0)" onclick = "reset_dynamic()">' +
+																		'Close&times;' +
+																	'</a><br>' +
+
+																	'<p>' +
+																		'1) Press up or W key to move character forward.<br>' +
+																		'2) Press down or S key to move character backward.<br>' +
+																		'3) Press right or D key to rotate character right.<br>' +
+																		'4) Press left of A key to rotate character left.<br>' +
+																	'</p>' +
+
+																'</div>' +
+															'</div>' +
+														'</div>';
+				document.getElementById('dynamic').innerHTML = box_content;
+				gamePaused = true;
+			}
+
+			function endDialog(){
+				var box_content = 	'<div id = "overlay">' +
+															'<div id = "box_frame">' +
+																'<div id = "box">' +
+																	'<p class = "end_message" style = "text-align: center">' +
+																		'Congratulation !!!<br>' +
+																		'You have successfully got out of the Hell Island.<br>' +
+																		'Want to visit Hell Island one more time?' +
+																	'</p>' +
+																	'<button type="button" onclick = "javascript:location.reload()">Yes</button>' +
+																	'<button type="button" style="float: right" onclick = "javascript:window.close()">No</button>' +
+																'</div>' +
+															'</div>' +
+														'</div>';
+				document.getElementById('dynamic').innerHTML = box_content;
+				gamePaused = true;
+			}
+
+			function settingCheckbox(){
+				var box_content = 	'<div id = "overlay">' +
+															'<div id = "box_frame">' +
+																'<div id = "box">' +
+																	'<input class = "minimap_chkbox" type = "checkbox">' +
+																	'Enable minimap in game. </input><br>' +
+																	'<button type="button" onclick = "javascript:chkBoxValue()">Save</button>' +
+																	'<button type="button" style="float: right" onclick = "reset_dynamic()">Cancel</button>' +
+																'</div>' +
+															'</div>' +
+														'</div>';
+				document.getElementById('dynamic').innerHTML = box_content;
+				gamePaused = true;
+			}
+
+			function welcomeMesssage(){
+				var box_content =		'<div id = "overlay">' +
+															'<div id = "box_frame">' +
+																'<div id = "box">' +
+																	'<a id = "closeme" href = "javascript:void(0)" onclick = "reset_dynamic()">' +
+																		'Close&times;' +
+																	'</a><br>' +
+
+																	'<p>' +
+																		'Welcome to the Hell Island. No life is possible in this Island so you have to get out of here as soon as possible. Remember you have someone waiting for you in your world.'
+																	'</p>' +
+
+																'</div>' +
+															'</div>' +
+														'</div>';
+
+				document.getElementById('dynamic').innerHTML = box_content;
+				gamePaused = true;
+			}
+
+			function chkBoxValue(){
+				// console.log(document.getElementsByClassName('minimap_chkbox')[0].checked);
+				var checkbox = document.getElementsByClassName('minimap_chkbox')[0];
+				if (checkbox.checked === true){
+					minimap_enabled = true;
+				}
+				else{
+					minimap_enabled = false;
+				}
+				reset_dynamic();
+			}
+
+			function reset_dynamic(){
+				document.getElementById('dynamic').innerHTML = '';
+				gamePaused = false;
+			}
+		</script>
 	</head>
 	<body>
-		<script src="javascript/maze.js"></script>
+		<div id = "dynamic"></div>
+		<div id = "info">
+			<a href = "javascript:void(0)" onclick = "open_box()">
+				<img src = "assets/help.png" alt = "help" style="width: 75; height: 75">
+			</a>
+		</div>
+		<div id = "setting" style = "margin-top: 75px;">
+			<a href = "javascript:void(0)" onclick = "settingCheckbox()">
+				<img src="assets/setting.png" alt = "setting" style="width: 75; height: 75">
+			</a>
+		</div>
 
 		<script>
 			var scene, scene2;
@@ -37,7 +193,7 @@
 			var moveForward, moveBackward, moveRight, moveLeft;
 
 			var clock = new THREE.Clock();
-			var loader, vlad, handler, walk, mixer;
+			var loader, cave_loader, vlad, handler, walk, mixer, cave;
 
 			var rays = [
 
@@ -51,6 +207,9 @@
 				new THREE.Vector3(-1, -1, 0) // backward left
 
 			];
+
+			var imagePrefix, directions, imageSuffix, skyGeometry, materialArray;
+
 
 			start = function(){
 
@@ -97,16 +256,16 @@
 				scene.add(directionallight);
 
 				// spotlight for making the back of character visible
-				spotlight = new THREE.SpotLight(0xffffff, 0.5);
-				spotlight.position.set(-45, -55, 3.5);
-				spotlight.target.position = scene.position;
+				spotlight = new THREE.PointLight(0xffffff, 1);
+				spotlight.position.set(cube_mesh.position.x, cube_mesh.position.y - 1, cube_mesh.position.z + 2);
+				// spotlight.target.position = scene.position;
 				scene.add(spotlight);
 				// making spotlight child of cube_mesh
 				cube_mesh.add(spotlight);
 
 				// A ground
 				PlaneGeometry = new THREE.PlaneGeometry(200, 150, 1);
-				material = new THREE.MeshLambertMaterial( { map: new THREE.TextureLoader().load("assets/ground.jpg") });
+				material = new THREE.MeshLambertMaterial( { map: new THREE.TextureLoader().load("assets/ground.jpg"), repeat: 2 });
 				plane = new THREE.Mesh(PlaneGeometry, material);
 				scene.add(plane);
 
@@ -129,16 +288,56 @@
 				// instance of raycaster
 				raycaster = new THREE.Raycaster();
 
+				// adding skybox
+				imagePrefix = "assets/dawnmountain-";
+				// directions = ["xpos", "xneg", "zpos", "zneg", "ypos", "yneg"];
+				directions  = ["xpos", "xneg", "ypos", "yneg", "zpos", "zneg"];
+				imageSuffix = ".png";
+				skyGeometry = new THREE.CubeGeometry( 1000, 1000, 1000 );
+
+				materialArray = [];
+				for (var i = 0; i < 6; i++){
+					materialArray.push( new THREE.MeshBasicMaterial({
+						map: new THREE.TextureLoader().load( imagePrefix + directions[i] + imageSuffix ),
+						side: THREE.BackSide
+					}));
+				}
+
+				var skyMaterial = new THREE.MeshFaceMaterial( materialArray );
+				var skyBox = new THREE.Mesh(skyGeometry, skyMaterial);
+				skyBox.rotation.x = 90 * Math.PI / 180;
+				skyBox.position.z = 20;
+				// var skyBox = THREE.SceneUtils.createMultiMaterialObject( skyGeometry, skyMaterial );
+				scene.add( skyBox );
+
 				// importing the character from json file created from blender
 				loader = new THREE.JSONLoader();
+				cave_loader = new THREE.JSONLoader();
+
+				// cave model
+				cave_loader.load('assets/model/cave.json', function(geometry, material){
+
+					material.forEach(function(mat){
+						mat.skinning = true;
+					});
+					cave = new THREE.Mesh(geometry, material);
+					cave.position.set(45, 50, 0.01);
+					cave.rotation.x = 90 * Math.PI / 180;
+					cave.rotation.y = 90 * Math.PI / 180;
+					cave.scale.set(5, 5, 5);
+					scene.add(cave);
+					collidable_walls.push(cave);
+				});
+
+				welcomeMesssage();
+
+				// character model
 				loader.load('assets/model/min_ploy_character.json', function (geometry, materials){
 
 					materials.forEach(function (mat){
 						mat.skinning = true;
 					})
 					var material = new THREE.MeshPhongMaterial( { map: 								THREE.ImageUtils.loadTexture('assets/min_ploy_character_texture.png') } );
-
-
 
 					vlad = new THREE.SkinnedMesh(geometry, new THREE.MeshFaceMaterial(materials));
 					vlad.position.set(-45, -51, 0);
@@ -167,8 +366,10 @@
 				renderer.clear();
 				renderer.render(scene, camera);
 				renderer.clearDepth();
-				renderer.render(scene2, camera2);
 
+				if(minimap_enabled){
+					renderer.render(scene2, camera2);
+				}
 
 				update();
 
@@ -193,41 +394,42 @@
 				// 7 = backward left
 
 				// keyboard controls
-				if (keyboard.pressed("W") || keyboard.pressed("up")){
-					cube_mesh.translateY( 0.1 );
-					help_cube_mesh.translateY( 0.1 );
-					walk.play();
-					moveForward = true;
-				}
-				else{
-					moveForward = false;
-				}
+				if (!gamePaused){
+					if (keyboard.pressed("W") || keyboard.pressed("up")){
+						cube_mesh.translateY( 0.1 );
+						help_cube_mesh.translateY( 0.1 );
+						moveForward = true;
+					}
+					else{
+						moveForward = false;
+					}
 
-				if (keyboard.pressed("A") || keyboard.pressed("left")){
-					cube_mesh.rotation.z += 1 * Math.PI / 180;
-					help_cube_mesh.rotation.z += 1 * Math.PI / 180;
-					moveLeft = true;
-				}
-				else{
-					moveLeft = false;
-				}
+					if (keyboard.pressed("A") || keyboard.pressed("left")){
+						cube_mesh.rotation.z += 1 * Math.PI / 180;
+						help_cube_mesh.rotation.z += 1 * Math.PI / 180;
+						moveLeft = true;
+					}
+					else{
+						moveLeft = false;
+					}
 
-				if (keyboard.pressed("S") || keyboard.pressed("down")){
-					cube_mesh.translateY( -0.1 );
-					help_cube_mesh.translateY( -0.1 );
-					moveBackward = true;
-				}
-				else {
-					moveBackward = false;
-				}
+					if (keyboard.pressed("S") || keyboard.pressed("down")){
+						cube_mesh.translateY( -0.1 );
+						help_cube_mesh.translateY( -0.1 );
+						moveBackward = true;
+					}
+					else {
+						moveBackward = false;
+					}
 
-				if (keyboard.pressed("D") || keyboard.pressed("right")){
-					cube_mesh.rotation.z -= 1 * Math.PI/180;
-					help_cube_mesh.rotation.z -= 1 * Math.PI/180;
-					moveRight = true;
-				}
-				else{
-					moveRight = false;
+					if (keyboard.pressed("D") || keyboard.pressed("right")){
+						cube_mesh.rotation.z -= 1 * Math.PI/180;
+						help_cube_mesh.rotation.z -= 1 * Math.PI/180;
+						moveRight = true;
+					}
+					else{
+						moveRight = false;
+					}
 				}
 
 				// playing the animation only if key is pressed
@@ -238,7 +440,20 @@
 					walk.stop();
 				}
 
+				if(cube_mesh.position.y > 51 && cube_mesh.position.y < 140){
+					directionallight.intensity = 0;
+				}
+				else{
+					directionallight.intensity = 1;
+				}
+
+				if (cube_mesh.position.y > 124 && !gamePaused){
+					walk.stop();
+					endDialog();
+				}
 			}
+
+
 
 			// initializing the component's for scene
 			start();
