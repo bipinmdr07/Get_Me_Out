@@ -8,6 +8,7 @@
 		<script src="javascript/THREEx.KeyboardState.js"></script>
 		<script src="javascript/collision.js"></script>
 		<script src="javascript/maze.js"></script>
+		<script src="javascript/Decal.js"></script>
 		<!-- <script src="javascript/physijs/physi.js"></script> -->
 		<!-- <script src="javascript/OrbitControls.js"></script> -->
 
@@ -195,6 +196,10 @@
 			var clock = new THREE.Clock();
 			var loader, cave_loader, vlad, handler, walk, mixer, cave;
 
+			// for decal
+			var mouse, decalTexture, decalFactory, time;
+			var decalTargets = [];
+
 			var rays = [
 
 				new THREE.Vector3(0, 1, 0),	// forward
@@ -210,8 +215,36 @@
 
 			var imagePrefix, directions, imageSuffix, skyGeometry, materialArray;
 
+			// variables for boundary walls
+			var boundaryWallLeft, boundaryWallBack, boundaryWallRight;
+
 
 			start = function(){
+				// mouse click events
+				document.addEventListener('mousedown', onMouseDown, false);
+				document.addEventListener('mousemove', onMouseMove, false);
+
+				// decal
+				mouse = new THREE.Vector2(0, 0);
+				decalTexture = new THREE.TextureLoader().load("assets/splat.png");
+
+				decalFactory = new THREE.DecalFactory({
+					material: new THREE.MeshPhongMaterial({
+						sides: THREE.DoubleSide,
+						color: 0xffffff,
+						map: decalTexture,
+						transparent: true,
+						polygonOffset: true,
+						polygonOffsetFactor: -0.1,
+						shading: THREE.SmoothShading,
+						depthWrite: false,
+						shininess: 50,
+						specular: 0xffffff
+					}),
+					maxDecals:  100
+				});
+
+				time = Date.now();
 
 				// this scene is for main playing screen
 				scene = new THREE.Scene();
@@ -238,6 +271,28 @@
 				cube_material = new THREE.MeshBasicMaterial({color: 0x00a000});
 				cube_mesh = new THREE.Mesh(cube, cube_material);
 				cube_mesh.position.set(-45, -51, 0.6);
+
+				// initializing the invisible boundary walls
+				// right boundary wall
+				boundaryWallRight = new THREE.Mesh(new THREE.BoxGeometry(1, 20, 10), new THREE.MeshBasicMaterial({ color: 0x00a000}));
+				boundaryWallRight.position.set(50, -60, 0.5);
+				scene.add(boundaryWallRight);
+				collidable_walls.push(boundaryWallRight);
+				boundaryWallRight.material.visible = false;
+
+				// left boundary wall
+				boundaryWallLeft = new THREE.Mesh(new THREE.BoxGeometry(1, 20, 10), new THREE.MeshBasicMaterial({ color: 0x00a000}));
+				boundaryWallLeft.position.set(-50, -60, 0.5);
+				scene.add(boundaryWallLeft);
+				collidable_walls.push(boundaryWallLeft);
+				boundaryWallLeft.material.visible = false;
+
+				// back boundary wall
+				boundaryWallBack = new THREE.Mesh(new THREE.BoxGeometry(100, 1, 10), new THREE.MeshBasicMaterial({ color: 0x00a000}));
+				boundaryWallBack.position.set(0, -70, 0.5);
+				scene.add(boundaryWallBack);
+				collidable_walls.push(boundaryWallBack);
+				boundaryWallBack.material.visible = false;
 
 				// making the cube invisible
 				cube_mesh.material.visible = false;
@@ -281,6 +336,11 @@
 				// initializing maze
 				setup();
 				draw_maze();
+
+				// adding walls for decal
+				collidable_walls.forEach(function (singleWall){
+					decalTargets.push(singleWall);
+				});
 
 				// getting the position of the cube for origin of raycasting for collision detection
 				position = new THREE.Vector3(cube_mesh.position.x, cube_mesh.position.y, cube_mesh.position.z);
@@ -370,6 +430,9 @@
 				if(minimap_enabled){
 					renderer.render(scene2, camera2);
 				}
+				time += clock.getDelta();
+
+				decalFactory.update();
 
 				update();
 
@@ -450,6 +513,40 @@
 				if (cube_mesh.position.y > 124 && !gamePaused){
 					walk.stop();
 					endDialog();
+				}
+			}
+
+			function onMouseMove(event){
+				mouse.set( (event.clientX / window.innerWidth) * 2 - 1, - (event.clientY / window.innerHeight) * 2 + 1 );
+			}
+
+			function onMouseDown(event) {
+				var mouse = new THREE.Vector3(
+					( event.clientX - renderer.domElement.offsetLeft ) / window.innerWidth * 2 - 1,
+					-1.0 * ( ( event.clientY - renderer.domElement.offsetTop ) / window.innerHeight ) * 2 + 1, 0.0);
+				// var proj = new THREE.Projector();
+				var decal_raycaster = new THREE.Raycaster;
+				decal_raycaster.setFromCamera( mouse, camera );
+
+				var meshList = [];
+
+				var intersect = decal_raycaster.intersectObjects(decalTargets);
+
+				if (intersect.length > 0){
+					var closest = 0;
+					var closeDistance = 10000000000;
+					for(var i = 0; i < intersect.length; i++){
+						if(intersect[i].distance < closeDistance){
+							closest = i;
+							closeDistance = intersect[i].distance;
+						}
+					}
+
+					var size = Math.random() * 40 + 2;
+					decalFactory.projectOnMesh( intersect[closest].object, intersect[closest].point, decal_raycaster.ray.direction, Math.random() * Math.PI * 2, new THREE.Vector3(size, size, size + 5));
+				}
+				else {
+					console.log("No intersections.")
 				}
 			}
 
