@@ -4,11 +4,11 @@
 
 		<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script> -->
 		<!-- <link rel="stylesheet" href="assets/animation.css"> -->
-		<script src="javascript/three.min.js"></script>
-		<script src="javascript/THREEx.KeyboardState.js"></script>
+		<script src="javascript/library/three.min.js"></script>
+		<script src="javascript/library/THREEx.KeyboardState.js"></script>
 		<script src="javascript/collision.js"></script>
 		<script src="javascript/maze.js"></script>
-		<script src="javascript/Decal.js"></script>
+		<script src="javascript/library/Decal.js"></script>
 		<!-- <script src="javascript/physijs/physi.js"></script> -->
 		<!-- <script src="javascript/OrbitControls.js"></script> -->
 
@@ -272,28 +272,6 @@
 				cube_mesh = new THREE.Mesh(cube, cube_material);
 				cube_mesh.position.set(-45, -51, 0.6);
 
-				// initializing the invisible boundary walls
-				// right boundary wall
-				boundaryWallRight = new THREE.Mesh(new THREE.BoxGeometry(1, 20, 10), new THREE.MeshBasicMaterial({ color: 0x00a000}));
-				boundaryWallRight.position.set(50, -60, 0.5);
-				scene.add(boundaryWallRight);
-				collidable_walls.push(boundaryWallRight);
-				boundaryWallRight.material.visible = false;
-
-				// left boundary wall
-				boundaryWallLeft = new THREE.Mesh(new THREE.BoxGeometry(1, 20, 10), new THREE.MeshBasicMaterial({ color: 0x00a000}));
-				boundaryWallLeft.position.set(-50, -60, 0.5);
-				scene.add(boundaryWallLeft);
-				collidable_walls.push(boundaryWallLeft);
-				boundaryWallLeft.material.visible = false;
-
-				// back boundary wall
-				boundaryWallBack = new THREE.Mesh(new THREE.BoxGeometry(100, 1, 10), new THREE.MeshBasicMaterial({ color: 0x00a000}));
-				boundaryWallBack.position.set(0, -70, 0.5);
-				scene.add(boundaryWallBack);
-				collidable_walls.push(boundaryWallBack);
-				boundaryWallBack.material.visible = false;
-
 				// making the cube invisible
 				cube_mesh.material.visible = false;
 				scene.add(cube_mesh);
@@ -341,6 +319,28 @@
 				collidable_walls.forEach(function (singleWall){
 					decalTargets.push(singleWall);
 				});
+
+				// initializing the invisible boundary walls
+				// right boundary wall
+				boundaryWallRight = new THREE.Mesh(new THREE.BoxGeometry(1, 20, 10), new THREE.MeshBasicMaterial({ color: 0x00a000}));
+				boundaryWallRight.position.set(50, -60, 0.5);
+				scene.add(boundaryWallRight);
+				collidable_walls.push(boundaryWallRight);
+				boundaryWallRight.material.visible = false;
+
+				// left boundary wall
+				boundaryWallLeft = new THREE.Mesh(new THREE.BoxGeometry(1, 20, 10), new THREE.MeshBasicMaterial({ color: 0x00a000}));
+				boundaryWallLeft.position.set(-50, -60, 0.5);
+				scene.add(boundaryWallLeft);
+				collidable_walls.push(boundaryWallLeft);
+				boundaryWallLeft.material.visible = false;
+
+				// back boundary wall
+				boundaryWallBack = new THREE.Mesh(new THREE.BoxGeometry(100, 1, 10), new THREE.MeshBasicMaterial({ color: 0x00a000}));
+				boundaryWallBack.position.set(0, -70, 0.5);
+				scene.add(boundaryWallBack);
+				collidable_walls.push(boundaryWallBack);
+				boundaryWallBack.material.visible = false;
 
 				// getting the position of the cube for origin of raycasting for collision detection
 				position = new THREE.Vector3(cube_mesh.position.x, cube_mesh.position.y, cube_mesh.position.z);
